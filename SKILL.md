@@ -25,14 +25,10 @@ const bs58 = require("bs58");
 const fs = require("fs");
 
 const keypair = Keypair.generate();
-const pubkey = keypair.publicKey.toBase58();
-const secret = bs58.encode(keypair.secretKey);
-
-console.log("Public Key:", pubkey);
-console.log("Secret Key (bs58):", secret);
+console.log("Public Key:", keypair.publicKey.toBase58());
 
 // Save keypair to file (JSON array format, compatible with Solana CLI)
-fs.writeFileSync("wallet.json", JSON.stringify(Array.from(keypair.secretKey)));
+fs.writeFileSync("wallet.json", JSON.stringify(Array.from(keypair.secretKey)), { mode: 0o600 });
 console.log("Saved to wallet.json");
 ```
 
@@ -49,7 +45,7 @@ console.log("Loaded:", keypair.publicKey.toBase58());
 ```
 
 ```javascript
-// From bs58 private key string
+// From bs58 private key string (never log the key itself)
 const bs58 = require("bs58");
 const { Keypair } = require("@solana/web3.js");
 
@@ -170,6 +166,7 @@ for (const s of sigs) {
 
 ```javascript
 const { Keypair } = require("@solana/web3.js");
+const fs = require("fs");
 
 const prefix = "SOL"; // desired prefix
 let attempts = 0;
@@ -180,7 +177,9 @@ while (true) {
   if (kp.publicKey.toBase58().startsWith(prefix)) {
     console.log(`Found after ${attempts} attempts!`);
     console.log("Public Key:", kp.publicKey.toBase58());
-    console.log("Secret Key:", JSON.stringify(Array.from(kp.secretKey)));
+    // Save to file — never log the secret key
+    fs.writeFileSync("vanity-wallet.json", JSON.stringify(Array.from(kp.secretKey)), { mode: 0o600 });
+    console.log("Saved to vanity-wallet.json");
     break;
   }
   if (attempts % 100000 === 0) console.log(`${attempts} attempts...`);
@@ -189,11 +188,12 @@ while (true) {
 
 ## Security Notes
 
+- **NEVER log, print, or display private keys or secret keys** — write them to files only
 - **Never share private keys or wallet.json files**
-- Store wallet files with restricted permissions: `chmod 600 wallet.json`
+- Always save keypair files with restricted permissions (mode 0o600)
 - For mainnet wallets with significant funds, use a hardware wallet
 - Devnet/testnet SOL has no real value — safe for testing
-- When generating wallets for the user, always tell them where the keypair file is saved
+- When generating wallets, tell the user the public key and file path — never the secret
 
 ## Explorer Links
 
